@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Олимпийская аналитика</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <canvas id="hero-canvas" aria-hidden="true"></canvas>
+      <nav class="topbar">
+        <div class="brand">Olympic Data</div>
+        <div class="nav-actions" id="nav-actions" hidden>
+          <a id="excel-link" href="outputs/olympics_report.xlsx">Excel-отчет</a>
+          <a href="#source-code">Код анализа</a>
+        </div>
+      </nav>
+      <div class="hero-content">
+        <div class="hero-copy">
+          <p class="eyebrow">athlete_events.csv · 1896-2016</p>
+          <h1>Олимпийские игры в данных</h1>
+          <p class="lead">
+            Визуальный разбор истории участия спортсменов, медального зачета и отдельных олимпийских рекордов.
+          </p>
+          <div class="hero-actions">
+            <button class="primary-action" id="load-data" type="button">Показать дашборд</button>
+            <span class="load-hint" id="load-hint">CSV уже обработан Python-скриптом, сайт покажет готовую инфографику.</span>
+          </div>
+        </div>
+        <figure class="hero-visual" aria-label="Олимпийские кольца"></figure>
+      </div>
+    </header>
+
+    <main>
+      <section class="load-screen" id="load-screen">
+        <div>
+          <p class="eyebrow">Готово к запуску</p>
+          <h2>Нажми кнопку выше, чтобы раскрыть дашборд</h2>
+          <p>
+            Сначала сайт показывает только обложку. После загрузки открываются рассчитанные показатели,
+            диаграммы и исходный код Python-программы, которая подготовила агрегаты.
+          </p>
+        </div>
+        <div class="load-metrics">
+          <span>15 колонок CSV</span>
+          <span>271 116 строк</span>
+          <span>10 визуализаций</span>
+        </div>
+      </section>
+
+      <div id="dashboard" class="dashboard" hidden>
+        <section class="kpi-grid" id="kpis"></section>
+
+        <section class="band split">
+          <article class="panel">
+            <div class="section-title">
+              <p>Сравнение стран</p>
+              <h2>Россия/СССР и США</h2>
+            </div>
+            <div id="country-comparison" class="chart"></div>
+          </article>
+          <article class="panel compact">
+            <div class="section-title">
+              <p>Первые золотые медали</p>
+              <h2>Керлинг, 1924</h2>
+            </div>
+            <div id="curling-list" class="name-list"></div>
+          </article>
+        </section>
+
+        <section class="band">
+          <div class="section-title">
+            <p>Медальный зачет</p>
+            <h2>Страны с максимальным количеством наград</h2>
+          </div>
+          <div id="top-countries" class="chart wide"></div>
+        </section>
+
+        <section class="band split">
+          <article class="panel">
+            <div class="section-title">
+              <p>Участие женщин</p>
+              <h2>Динамика по годам</h2>
+            </div>
+            <div id="female-line" class="chart"></div>
+          </article>
+          <article class="panel">
+            <div class="section-title">
+              <p>Сезонность</p>
+              <h2>Летние и зимние игры</h2>
+            </div>
+            <div id="season-donut" class="chart"></div>
+          </article>
+        </section>
+
+        <section class="band split">
+          <article class="panel">
+            <div class="section-title">
+              <p>Возраст</p>
+              <h2>Распределение спортсменов</h2>
+            </div>
+            <div id="age-chart" class="chart"></div>
+          </article>
+          <article class="panel">
+            <div class="section-title">
+              <p>Российская Федерация</p>
+              <h2>Топ летних видов спорта</h2>
+            </div>
+            <div id="rus-sports" class="chart"></div>
+          </article>
+        </section>
+
+        <section class="band">
+          <div class="section-title">
+            <p>Антропометрия</p>
+            <h2>Рост, вес и возраст спортсменов</h2>
+          </div>
+          <div class="scatter-grid">
+            <div id="scatter-height-weight" class="chart"></div>
+            <div id="scatter-age-weight" class="chart"></div>
+            <div id="scatter-age-height" class="chart"></div>
+          </div>
+          <div id="extremes" class="record-grid"></div>
+        </section>
+
+        <section class="band split">
+          <article class="panel">
+            <div class="section-title">
+              <p>Возраст 60+</p>
+              <h2>Олимпийские чемпионы</h2>
+            </div>
+            <div id="older-champions" class="table-wrap"></div>
+          </article>
+          <article class="panel">
+            <div class="section-title">
+              <p>Возраст 60+</p>
+              <h2>Виды спорта по наградам</h2>
+            </div>
+            <div id="older-sports" class="chart"></div>
+          </article>
+        </section>
+
+        <section class="band">
+          <div class="section-title">
+            <p>Лидеры</p>
+            <h2>10 спортсменов с максимальным количеством медалей</h2>
+          </div>
+          <div id="top-athletes" class="table-wrap"></div>
+        </section>
+
+        <section class="band code-band" id="source-code">
+          <div class="section-title">
+            <p>Python / Pandas</p>
+            <h2>Код, который распарсил и агрегировал данные</h2>
+          </div>
+          <div class="code-toolbar">
+            <span>olympics_analysis.py</span>
+            <button class="secondary-action" id="reload-code" type="button">Обновить код</button>
+          </div>
+          <pre class="code-viewer"><code id="analysis-code">Код будет загружен после нажатия кнопки.</code></pre>
+        </section>
+      </div>
+    </main>
+
+    <div class="focus-modal" id="focus-modal" hidden>
+      <div class="focus-backdrop" data-close-focus></div>
+      <section class="focus-dialog" role="dialog" aria-modal="true" aria-labelledby="focus-title">
+        <div class="focus-toolbar">
+          <h2 id="focus-title">Детальный просмотр</h2>
+          <button class="secondary-action" type="button" data-close-focus>Закрыть</button>
+        </div>
+        <div class="focus-content" id="focus-content"></div>
+      </section>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
