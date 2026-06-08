@@ -31,18 +31,39 @@ COLUMN_CANDIDATES = {
         "industry",
         "industryName",
         "industry_name",
+        "professionalSphereName",
         "company_business_size",
         "category",
         "professionalSphere",
         "professional_sphere",
+        "industryBranchName",
     ),
-    "profession": ("profession", "job-name", "job_name", "name", "vacancy_name", "position", "specialisation"),
+    "profession": (
+        "profession",
+        "job-name",
+        "job_name",
+        "name",
+        "vacancyName",
+        "vacancy_name",
+        "position",
+        "specialisation",
+        "typicalPosition",
+    ),
     "experience": ("experience", "required_experience", "experienceRequirements", "experience_requirements"),
     "salary_min": ("salary_min", "salary_from", "payment_from", "min_salary", "salaryMin"),
     "salary_max": ("salary_max", "salary_to", "payment_to", "max_salary", "salaryMax"),
     "salary_text": ("salary", "salary_text", "payment", "compensation"),
-    "published_at": ("published_at", "creation-date", "creation_date", "date", "published", "date_publish"),
-    "company": ("company", "company_name", "employer", "employer_name", "organization"),
+    "published_at": (
+        "published_at",
+        "datePublished",
+        "creation-date",
+        "creation_date",
+        "date",
+        "published",
+        "date_publish",
+        "creationDate",
+    ),
+    "company": ("fullCompanyName", "company", "company_name", "employer", "employer_name", "organization"),
 }
 
 
@@ -51,9 +72,24 @@ def available_dataset_path() -> Path:
 
 
 def load_vacancies(csv_path: Path | str | BinaryIO | None = None) -> pd.DataFrame:
-    path = Path(csv_path) if isinstance(csv_path, str) else csv_path
-    df = pd.read_csv(path or available_dataset_path(), sep=None, engine="python")
-    column_map = infer_columns(df.columns)
+    source = Path(csv_path) if isinstance(csv_path, str) else csv_path
+
+    if isinstance(source, Path) or source is None:
+        path = source or available_dataset_path()
+        delimiter = detect_delimiter(path)
+        header = pd.read_csv(path, sep=delimiter, nrows=0, encoding="utf-8")
+        column_map = infer_columns(header.columns)
+        df = pd.read_csv(
+            path,
+            sep=delimiter,
+            usecols=selected_columns(column_map),
+            encoding="utf-8",
+            low_memory=False,
+        )
+    else:
+        df = pd.read_csv(source, sep=None, engine="python")
+        column_map = infer_columns(df.columns)
+
     return clean_vacancies(df, column_map)
 
 
@@ -129,13 +165,13 @@ def normalize_experience(series: pd.Series) -> pd.Series:
         if pd.isna(value):
             return "Не указан"
         text = str(value)
-        if "без" in text or "no experience" in text or "doesnt matter" in text:
+        if text in {"0", "0.0"} or "без" in text or "no experience" in text or "doesnt matter" in text:
             return "Без опыта"
-        if "1" in text and "3" in text:
+        if text in {"1", "2", "3"} or ("1" in text and "3" in text):
             return "1-3 года"
-        if "3" in text and ("6" in text or "лет" in text):
+        if text in {"4", "5", "6"} or ("3" in text and ("6" in text or "лет" in text)):
             return "3-6 лет"
-        if "6" in text or "more" in text:
+        if text.isdigit() and int(text) > 6 or "6" in text or "more" in text:
             return "6+ лет"
         return str(value).strip().capitalize()
 
@@ -152,11 +188,24 @@ def parse_numeric_salary(series: pd.Series) -> pd.Series:
     return pd.to_numeric(values, errors="coerce")
 
 
+def detect_delimiter(path: Path) -> str:
+    first_line = path.open("r", encoding="utf-8", errors="ignore").readline()
+    return "|" if first_line.count("|") > first_line.count(",") else ","
+
+
+def selected_columns(column_map: ColumnMap) -> list[str]:
+    return list(dict.fromkeys(column for column in column_map.__dict__.values() if column))
+
+
 def parse_dates(series: pd.Series) -> pd.Series:
     try:
-        return pd.to_datetime(series, errors="coerce", format="mixed", dayfirst=True)
+        parsed = pd.to_datetime(series, errors="coerce", format="mixed", dayfirst=True)
     except TypeError:
-        return pd.to_datetime(series, errors="coerce", dayfirst=True)
+        parsed = pd.to_datetime(series, errors="coerce", dayfirst=True)
+
+    if getattr(parsed.dt, "tz", None) is not None:
+        return parsed.dt.tz_localize(None)
+    return parsed
 
 
 def parse_salary_range(series: pd.Series) -> tuple[pd.Series, pd.Series]:

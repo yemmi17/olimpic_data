@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+
+APP_DIR = Path(__file__).resolve().parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
 
 from data_loader import DEFAULT_FULL_DATASET, available_dataset_path, build_graduate_gap, load_vacancies
 
@@ -95,22 +102,22 @@ def render_charts(vacancies: pd.DataFrame) -> None:
     industry_counts.columns = ["industry", "vacancies"]
     col1.plotly_chart(
         px.bar(industry_counts, x="vacancies", y="industry", orientation="h", title="Вакансии без опыта по отраслям"),
-        use_container_width=True,
+        width="stretch",
     )
 
     exp_counts = vacancies["experience"].value_counts().reset_index()
     exp_counts.columns = ["experience", "vacancies"]
     col2.plotly_chart(
         px.pie(exp_counts, names="experience", values="vacancies", hole=0.45, title="Пропорции по требуемому опыту"),
-        use_container_width=True,
+        width="stretch",
     )
 
     col3, col4 = st.columns(2)
     monthly = vacancies.groupby("month", as_index=False).size().rename(columns={"size": "vacancies"})
-    col3.plotly_chart(px.line(monthly, x="month", y="vacancies", markers=True, title="Динамика публикации вакансий"), use_container_width=True)
+    col3.plotly_chart(px.line(monthly, x="month", y="vacancies", markers=True, title="Динамика публикации вакансий"), width="stretch")
 
     salary_df = vacancies.dropna(subset=["salary_avg"])
-    col4.plotly_chart(px.box(salary_df, x="experience", y="salary_avg", color="experience", title="Зарплаты по опыту"), use_container_width=True)
+    col4.plotly_chart(px.box(salary_df, x="experience", y="salary_avg", color="experience", title="Зарплаты по опыту"), width="stretch")
 
 
 def render_pivot(vacancies: pd.DataFrame) -> None:
@@ -125,7 +132,7 @@ def render_pivot(vacancies: pd.DataFrame) -> None:
         margins=True,
         margins_name="Итого",
     )
-    st.dataframe(pivot, use_container_width=True)
+    st.dataframe(pivot, width="stretch")
 
 
 def render_outflow(vacancies: pd.DataFrame) -> None:
@@ -143,11 +150,11 @@ def render_outflow(vacancies: pd.DataFrame) -> None:
     comparison["salary_delta"] = comparison["outside_median_salary"] - comparison["home_median_salary"]
     comparison = comparison.dropna(subset=["salary_delta"]).sort_values(["salary_delta", "outside_vacancies"], ascending=False).head(15)
 
-    st.dataframe(comparison, use_container_width=True)
+    st.dataframe(comparison, width="stretch")
     if not comparison.empty:
         st.plotly_chart(
             px.bar(comparison, x="salary_delta", y="profession", orientation="h", title="Профессии с более высокой медианной зарплатой вне региона"),
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -160,7 +167,7 @@ def render_graduate_gap(vacancies: pd.DataFrame) -> None:
 
     graduates = pd.read_csv(uploaded)
     gap = build_graduate_gap(vacancies, graduates)
-    st.dataframe(gap, use_container_width=True)
+    st.dataframe(gap, width="stretch")
     st.plotly_chart(
         px.bar(
             gap.head(20),
@@ -169,7 +176,7 @@ def render_graduate_gap(vacancies: pd.DataFrame) -> None:
             orientation="h",
             title="Разрыв: вакансии минус выпускники",
         ),
-        use_container_width=True,
+        width="stretch",
     )
 
 
