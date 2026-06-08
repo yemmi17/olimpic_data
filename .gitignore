@@ -10,3 +10,4 @@ venv/
 *.log
 tmp/
 dist/
+data/vacancy.csv

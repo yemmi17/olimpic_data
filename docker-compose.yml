@@ -22,3 +22,30 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+
+  labor-market-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.labor-market
+    image: labor-market-dashboard:latest
+    container_name: labor-market-dashboard
+    ports:
+      - "${LABOR_MARKET_HOST_PORT:-8501}:8501"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./data:/app/data:ro
+    environment:
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
