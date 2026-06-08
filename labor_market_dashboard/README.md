@@ -15,6 +15,12 @@ Production/Docker Compose instructions are in:
 labor_market_dashboard/DEPLOYMENT.md
 ```
 
+Non-technical user documentation is in:
+
+```text
+labor_market_dashboard/USER_GUIDE.md
+```
+
 По умолчанию приложение использует небольшой локальный sample:
 
 ```text
